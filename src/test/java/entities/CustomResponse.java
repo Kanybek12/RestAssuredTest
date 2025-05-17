@@ -30,6 +30,7 @@ public class CustomResponse {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Support {
         private String url;
         private String text;

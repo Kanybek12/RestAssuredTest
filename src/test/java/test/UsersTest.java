@@ -15,13 +15,11 @@ import specifications.ResponseSpecs;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.equalTo;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 public class UsersTest {
 
@@ -50,7 +48,7 @@ public class UsersTest {
         System.out.println(email);
     }
 
-    @DisplayName("Get all users")
+    @DisplayName("Get all users total page")
     @Test
     public void GetAllUsers() {
         Response response = given()
@@ -63,14 +61,11 @@ public class UsersTest {
                 .extract()
                 .response();
 
-        //      int pageNumber = response.path("page");
-        //      int totalUsers = response.path("total");
-        //      String secondUserName = response.path("data[1].first_name");
+        int pageNumber = response.path("page");
+        int totalUsers = response.path("total");
 
-        //      System.out.println("Page: " + pageNumber); // Page: 2
-        //       System.out.println("Total users: " + totalUsers); // Total users: 12
-        //       System.out.println("Second user: " + secondUserName); // Second user: Lindsay
-
+        System.out.println("Page: " + pageNumber); // Page: 2
+        System.out.println("Total users: " + totalUsers); // Total users: 12
     }
 
     @DisplayName("Get all users and extract only names")
@@ -110,6 +105,7 @@ public class UsersTest {
         ObjectMapper mapper = new ObjectMapper();
         CustomResponse customResponse = mapper.readValue(response.asString(), CustomResponse.class);
 
+        //Assertion for null and empty field
         assertThat(customResponse.getData())
                 .as("Users list should not be null or empty")
                 .isNotNull()
@@ -123,6 +119,7 @@ public class UsersTest {
         System.out.println("User IDs: " + sellerIds);
     }
 
+    @DisplayName("Single user not found 404")
     @Test
     public void SingleUserNotFound() {
         Response response = given()
@@ -135,11 +132,12 @@ public class UsersTest {
                 .extract().response();
 
         System.out.println(response.statusCode());
+
     }
 
-    //Test
+    @DisplayName("List of JSON data")
     @Test
-    public void ListOfResources() {
+    public void ListOfResources() throws JsonProcessingException {
         Response response = given()
                 .spec(RequestSpecs.authenticatedRequest())
                 .when()
@@ -148,13 +146,21 @@ public class UsersTest {
                 .spec(ResponseSpecs.successResponse())
                 .extract().response();
 
-        int pageNumber = response.path("page");
-        int totalUsers = response.path("total");
-        String secondUserName = response.path("data[0].pantone_value");
+        ObjectMapper mapper = new ObjectMapper();
+        CustomResponse customResponse = mapper.readValue(response.getBody().asString(), CustomResponse.class);
 
-        System.out.println("Page: " + pageNumber); // Page: 2
-        System.out.println("Total users: " + totalUsers); // Total users: 12
-        System.out.println("Pantone value: " + secondUserName); // Second user: Lindsay
+        int pageNumber = response.path("page");
+        int perNumber = response.path("per_page");
+        int totalUsers = response.path("total");
+        int total_pages = response.path("total_pages");
+
+        CustomResponse.Support support = customResponse.getSupport();
+
+        System.out.println("Page: " + pageNumber);
+        System.out.println("Total users: " + perNumber);
+        System.out.println("Page: " + totalUsers);
+        System.out.println("Total users: " + total_pages);
+        System.out.println("Support: " + support.getUrl() + "\nText: "+support.getText());
     }
 
     @Test
@@ -166,8 +172,14 @@ public class UsersTest {
                 .then()
                 .spec(ResponseSpecs.successResponse())
                 .extract().response();
+
         String name = response.path("data.name");
-        System.out.println(name);
+        int id = response.path("data.id");
+
+        Assertions.assertEquals("fuchsia rose", name);
+        Assertions.assertEquals(2, id);
+        System.out.println("Name: "+ name + " ID: "+id);
+
     }
 
     @Test
@@ -208,9 +220,6 @@ public class UsersTest {
         System.out.println("Status Code: " + response.statusCode());
         System.out.println("Response Body: " + response.asPrettyString());
 
-        // Example: Extract and use values from response
-/*        int userId = response.jsonPath().getInt("id");
-        assertTrue(userId > 0, "User ID should be positive");*/
     }
 
     @Test
