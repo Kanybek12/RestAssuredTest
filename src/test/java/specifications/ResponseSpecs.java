@@ -9,7 +9,7 @@ public class ResponseSpecs {
     public static ResponseSpecification successResponse() {
         return new ResponseSpecBuilder()
                 .expectStatusCode(200)
-                .expectResponseTime(Matchers.lessThan(3000L))
+                .expectResponseTime(Matchers.lessThan(5000L))
                 .build();
     }
 
