@@ -9,6 +9,7 @@ public class RequestSpecs {
 
     public static RequestSpecification authenticatedRequest() {
         return new RequestSpecBuilder()
+                .setBaseUri("https://reqres.in/api")
                 .addHeader("x-api-key", TestConfig.API_KEY)
                 .addHeader("Content-Type", "application/json")
                 //.log(LogDetail.BODY)

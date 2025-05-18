@@ -350,7 +350,7 @@ public class UsersTest {
 
     }
 
-    @DisplayName("SIngle user *test*")
+    @DisplayName("Single user *test*")
     @Test
     public void testGetSingleUser() {
         Response response = given()
