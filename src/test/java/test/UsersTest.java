@@ -18,6 +18,8 @@ import java.util.List;
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.equalTo;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.lessThan;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class UsersTest {
 
@@ -27,9 +29,8 @@ public class UsersTest {
         System.out.println("🚀 Test started");
     }
 
-    @DisplayName("Get a single user")
+    @DisplayName("Get a single user *Test*")
     @Test
-
     public void GetSingleUser() {
         Response response = given()
                 .spec(RequestSpecs.authenticatedRequest())
@@ -43,26 +44,6 @@ public class UsersTest {
 
         String email = response.path("data.email");
         System.out.println("@Mail: " + email);
-    }
-
-    @DisplayName("Get all users total page")
-    @Test
-    public void GetAllUsers() {
-        Response response = given()
-                .spec(RequestSpecs.authenticatedRequest())
-                .when()
-                .get("/users?page=2")
-                .then()
-                .spec(ResponseSpecs.successResponse())
-                .statusCode(200)
-                .extract()
-                .response();
-
-        int pageNumber = response.path("page");
-        int totalUsers = response.path("total");
-
-        System.out.println("Page: " + pageNumber); // Page: 2
-        System.out.println("Total users: " + totalUsers); // Total users: 12
     }
 
     @DisplayName("Get all users and extract only names")
@@ -108,12 +89,12 @@ public class UsersTest {
                 .isNotNull()
                 .isNotEmpty();
 
-        List<Integer> sellerIds = new ArrayList<>();
+        List<Integer> Ids = new ArrayList<>();
 
         for (int i = 0; i < customResponse.getData().size(); i++) {
-            sellerIds.add(customResponse.getData().get(i).getId());
+            Ids.add(customResponse.getData().get(i).getId());
         }
-        System.out.println("User IDs: " + sellerIds);
+        System.out.println("User IDs: " + Ids);
     }
 
     @DisplayName("Single user not found 404")
@@ -173,10 +154,9 @@ public class UsersTest {
         String name = response.path("data.name");
         int id = response.path("data.id");
 
-        Assertions.assertEquals("fuchsia rose", name);
-        Assertions.assertEquals(2, id);
+        assertEquals("fuchsia rose", name);
+        assertEquals(2, id);
         System.out.println("Name: " + name + " ID: " + id);
-
     }
 
     @DisplayName("Single Of Resources not found")
@@ -196,7 +176,7 @@ public class UsersTest {
 
 
     //Method POST
-    @DisplayName("Create user method POST")
+    @DisplayName("Create user using method POST")
     @Test
     public void CreateUser() {
 
@@ -218,10 +198,9 @@ public class UsersTest {
         // Additional assertions or logging
         System.out.println("Status Code: " + response.statusCode());
         System.out.println("Response Body: " + response.asPrettyString());
-
     }
 
-    @DisplayName("Update user method PUT")
+    @DisplayName("Update user using method PUT")
     @Test
     public void UpdateUser() {
         File jsonFile = new File(
@@ -240,7 +219,7 @@ public class UsersTest {
         System.out.println("Response Body: " + response.asPrettyString());
     }
 
-    @DisplayName("Delete user method DELETE")
+    @DisplayName("Delete user using method DELETE")
     @Test
     public void DeleteUser() {
 
@@ -256,6 +235,7 @@ public class UsersTest {
         System.out.println("Response Body: " + response.asPrettyString());
     }
 
+    @DisplayName("Register user using method POST")
     @Test
     public void RegisterUser() {
 
@@ -279,30 +259,98 @@ public class UsersTest {
         System.out.println("Response Body: " + response.asPrettyString());
     }
 
+    @DisplayName("Register user unsuccessful using method POST")
     @Test
     public void RegisterUserUnsuccessful() {
 
         File jsonFile = new File(
-                getClass().getClassLoader().getResource("testdata/auth.json").getFile());
-
-        // Extract specific fields using JsonPath
-        String email = JsonPath.from(jsonFile).getString("email");
-//        String password = JsonPath.from(jsonFile).getString("password");
+                getClass().getClassLoader().getResource("testdata/test.json").getFile());
 
         Response response = given()
                 .spec(RequestSpecs.authenticatedRequest())
                 .when()
-                .body(email)
+                .body(jsonFile)
                 .post("/register")
                 .then()
                 .spec(ResponseSpecs.MissingAndBadRequest())
                 .extract().response();
 
-        System.out.println("Status Code: " + response.statusCode());
-        System.out.println("Response Body: " + response.asPrettyString());
+        String errorMessage = response.jsonPath().getString("error");
+        assertEquals("Missing password", errorMessage);
+        System.out.println("Error message: "+errorMessage);
+    }
+
+    @DisplayName("Login user using method POST")
+    @Test
+    public void LoginUser() {
+
+        File jsonFile = new File(
+                getClass().getClassLoader().getResource("testdata/login.json").getFile());
+
+        Response response = given()
+                .spec(RequestSpecs.authenticatedRequest())
+                .when()
+                .body(jsonFile)
+                .post("/login")
+                .then()
+                .spec(ResponseSpecs.successResponse())
+                .extract().response();
+
+        System.out.println("Resource exists: " +
+                (getClass().getResource("/testdata/login.json") != null));
+
+        String token = response.jsonPath().getString("token");
+        System.out.println("Token: "+token);
+    }
+
+    @DisplayName("Login user unsuccessful using method POST")
+    @Test
+    public void LoginUserUnsuccessful() {
+
+        File jsonFile = new File(
+                getClass().getClassLoader().getResource("testdata/test.json").getFile());
+
+        Response response = given()
+                .spec(RequestSpecs.authenticatedRequest())
+                .when()
+                .body(jsonFile)
+                .post("/login")
+                .then()
+                .spec(ResponseSpecs.MissingAndBadRequest())
+                .extract().response();
+
+        String errorMessage = response.jsonPath().getString("error");
+        assertEquals("Missing password", errorMessage);
+        System.out.println("Error message: "+errorMessage);
+    }
+
+    @DisplayName("Delayed response with data")
+    @Test
+    public void DelayedResponse() {
+        Response response = given()
+                .spec(RequestSpecs.authenticatedRequest())
+                .queryParam("delay", 3)  // Adds ?delay=3 to the URL
+                .when()
+                .get("/users")
+                .then()
+                .time(lessThan(5000L))  // Assert response time < 5 seconds
+                .spec(ResponseSpecs.successResponse())
+                .extract().response();
+
+        int pageNumber = response.path("page");
+        int perNumber = response.path("per_page");
+        int totalUsers = response.path("total");
+        int total_pages = response.path("total_pages");
+
+        System.out.println("Response time: " + response.time() + " ms");
+        System.out.println("Page: " + pageNumber);
+        System.out.println("Total users: " + perNumber);
+        System.out.println("Page: " + totalUsers);
+        System.out.println("Total users: " + total_pages);
 
     }
 
+    @DisplayName("SIngle user *test*")
     @Test
     public void testGetSingleUser() {
         Response response = given()
@@ -313,10 +361,10 @@ public class UsersTest {
                 .spec(ResponseSpecs.successResponse())
                 .extract().response();
 
-        Assertions.assertEquals(200, response.statusCode());
-        Assertions.assertEquals("janet.weaver@reqres.in", response.jsonPath().getString("data.email"));
-        Assertions.assertEquals("Janet", response.jsonPath().getString("data.first_name"));
-        Assertions.assertEquals("Weaver", response.jsonPath().getString("data.last_name"));
+        assertEquals(200, response.statusCode());
+        assertEquals("janet.weaver@reqres.in", response.jsonPath().getString("data.email"));
+        assertEquals("Janet", response.jsonPath().getString("data.first_name"));
+        assertEquals("Weaver", response.jsonPath().getString("data.last_name"));
     }
 
     @AfterAll
