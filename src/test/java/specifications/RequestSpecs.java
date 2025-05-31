@@ -19,7 +19,6 @@ public class RequestSpecs {
     public static RequestSpecification unauthenticatedRequest() {
         return new RequestSpecBuilder()
                 .addHeader("Content-Type", "application/json")
-
                 .build();
     }
 }

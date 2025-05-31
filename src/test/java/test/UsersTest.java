@@ -5,13 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import config.ApiConfig;
 
 import entities.CustomResponse;
-import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.*;
 import specifications.RequestSpecs;
 import specifications.ResponseSpecs;
+import utils.FileReader;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,12 +23,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class UsersTest {
-
-    @BeforeAll                                   //* If put in RequestSpecs
-    public static void setup() {
-        ApiConfig.setup();
-        System.out.println("🚀 Test started");
-    }
+    private Response response;
 
     @DisplayName("Get a single user *Test*")
     @Test
